@@ -18,12 +18,10 @@ with widths of 0.14. Kernel regression uses a Gaussian kernel with width 0.1.
 #    https://groups.google.com/forum/#!forum/astroml-general
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.stats import lognorm
 
 from astroML.cosmology import Cosmology
 from astroML.datasets import generate_mu_z
-from astroML.linear_model import LinearRegression, PolynomialRegression,\
-    BasisFunctionRegression, NadarayaWatson
+from astroML.linear_model import NadarayaWatson
 
 #----------------------------------------------------------------------
 # This function adjusts matplotlib settings for a uniform feel in the textbook.
@@ -31,7 +29,7 @@ from astroML.linear_model import LinearRegression, PolynomialRegression,\
 # result in an error if LaTeX is not installed on your system.  In that case,
 # you can set usetex to False.
 from astroML.plotting import setup_text_plots
-setup_text_plots(fontsize=8, usetex=False)
+setup_text_plots(fontsize=12, usetex=False)
 
 #------------------------------------------------------------
 # Generate data
@@ -46,60 +44,56 @@ mu_true = np.asarray(map(cosmo.mu, z))
 basis_mu = np.linspace(0, 2, 15)[:, None]
 basis_sigma = 3 * (basis_mu[1] - basis_mu[0])
 
-subplots = [221, 222, 223, 224]
-classifiers = [NadarayaWatson('gaussian', h=0.04),
-               NadarayaWatson('gaussian', h=0.08),
-               NadarayaWatson('gaussian', h=0.1),
-               NadarayaWatson('gaussian', h=0.2)]
-text = ['Gaussian Kernel\n Regression',
-        'Gaussian Kernel\n Regression',
-        'Gaussian Kernel\n Regression',
-        'Gaussian Kernel\n Regression']
+subplots = [121, 122]
+
 
 # number of constraints of the model.  Because
 # Nadaraya-watson is just a weighted mean, it has only one constraint
-n_constraints = [2, 5, len(basis_mu) + 1, 1]
 
 #------------------------------------------------------------
 # Plot the results
-fig = plt.figure(figsize=(5, 5))
-fig.subplots_adjust(left=0.1, right=0.95,
-                    bottom=0.1, top=0.95,
-                    hspace=0.05, wspace=0.05)
+NN=20
+h_arr=np.linspace(0.03, 0.5, num=NN)
+crossval=h_arr*0.0
 
-for i in range(4):
-    ax = fig.add_subplot(subplots[i])
+fig = plt.figure(figsize=(9, 5))
+
+fig.subplots_adjust(left=0.2, right=0.95,
+                bottom=0.15, top=0.95,
+                hspace=0.1, wspace=0.3)
+ax = fig.add_subplot(121)
+ax2= fig.add_subplot(122)
+
+for i in range(0, NN,1):
+
+    subs=50
 
     # fit the data
-    clf = classifiers[i]
-    clf.fit(z_sample[:, None], mu_sample, dmu)
-
-    mu_sample_fit = clf.predict(z_sample[:, None])
+    clf = NadarayaWatson('gaussian', h=h_arr[i])
+    clf.fit(z_sample[0:subs:, None], mu_sample[0:subs], dmu[0:subs])
+    
+    mu_sample_fit = clf.predict(z_sample[subs:, None])
     mu_fit = clf.predict(z[:, None])
 
-    chi2_dof = (np.sum(((mu_sample_fit - mu_sample) / dmu) ** 2)
-                / (len(mu_sample) - n_constraints[i]))
+    crossval1 = (np.sum((mu_sample_fit - mu_sample[subs:]) ** 2)
+                / (len(mu_sample[subs:]) - 1))
+    crossval[i]=crossval1
 
-    ax.plot(z, mu_fit, '-k')
-    ax.plot(z, mu_true, '--', c='gray')
+    ax.plot(z, mu_fit, '-', color='#DDDDDD')
+    ax.plot(z, mu_true, '--', c='red')
     ax.errorbar(z_sample, mu_sample, dmu, fmt='.k', ecolor='gray', lw=1)
 
-    ax.text(0.5, 0.05, r"$\chi^2_{\rm dof} = %.2f$" % chi2_dof,
-            ha='center', va='bottom', transform=ax.transAxes)
+    #ax.text(0.5, 0.05, r"$\chi^2_{\rm dof} = %.2f$" % chi2_dof,
+    #        ha='center', va='bottom', transform=ax.transAxes)
 
     ax.set_xlim(0.01, 1.8)
     ax.set_ylim(36.01, 48)
-    ax.text(0.05, 0.95, text[i], ha='left', va='top',
-            transform=ax.transAxes)
+    ax.set_ylabel(r'$\mu$')
+    ax.set_xlabel(r'$z$')
 
-    if i in (0, 2):
-        ax.set_ylabel(r'$\mu$')
-    else:
-        ax.yaxis.set_major_formatter(plt.NullFormatter())
 
-    if i in (2, 3):
-        ax.set_xlabel(r'$z$')
-    else:
-        ax.xaxis.set_major_formatter(plt.NullFormatter())
+ax2.plot(h_arr, crossval, '-', color='#000000')
+ax2.set_ylabel(r"$L_n(\^{f})$")
+ax2.set_xlabel(r'$h$')
 
 plt.show()
