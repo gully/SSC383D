@@ -76,6 +76,9 @@ for i in range(0, NN,1):
     crossval[i]=crossval1
 
     ax.plot(z, mu_fit, '-', color='#DDDDDD')
+    if abs(h_arr[i]-0.1) < 0.02:
+        ax.plot(z, mu_fit, '-', color='#0000FF')
+        
     ax.plot(z, mu_true, '--', c='red')
     ax.errorbar(z_sample, mu_sample, dmu, fmt='.k', ecolor='gray', lw=1)
 
