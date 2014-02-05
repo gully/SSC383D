@@ -23,15 +23,9 @@ learned through cross-validation.
 #3) Calculate the mean squared prediction error for each one
 
 
-
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy import ndimage
-
-from sklearn.gaussian_process import GaussianProcess
-
-from astroML.cosmology import Cosmology
-from astroML.datasets import generate_mu_z
+from scipy import ndimage as ndimage
 
 #----------------------------------------------------------------------
 # This function adjusts matplotlib settings for a uniform feel in the textbook.
@@ -43,51 +37,81 @@ setup_text_plots(fontsize=16, usetex=False)
 
 #------------------------------------------------------------
 # Generate data
-z_sample, mu_sample, dmu = generate_mu_z(100, random_state=0)
-z_s1, mu_s1, dmu1 = generate_mu_z(100, random_state=1)
+x=np.linspace(0.0,1.0, 500)
+amp=1.0
+p1=0.1
+p2=1.0
+nz1=0.05
+nz2=0.35
 
-cosmo = Cosmology()
-z = np.linspace(0.01, 2, 1000)
-mu_true = np.asarray(map(cosmo.mu, z))
+#                   high noise      low noise
+#Wiggly function    11              12
+#smooth function    21              22
 
+y11= np.sin(2.0*np.pi*x/p1) + np.random.normal(loc=0.0, scale=nz2, size=500)
+y12= np.sin(2.0*np.pi*x/p1) + np.random.normal(loc=0.0, scale=nz1, size=500)
+y21= np.sin(2.0*np.pi*x/p2) + np.random.normal(loc=0.0, scale=nz2, size=500)
+y22= np.sin(2.0*np.pi*x/p2) + np.random.normal(loc=0.0, scale=nz1, size=500)
+
+#cross validation:
+w_arr=np.linspace(0, 99, num=100)+3
+cv_arr11=w_arr*0.0
+cv_arr22=w_arr*0.0
+for i in range(0, 100, 1):
+    sm_w=w_arr[i]
+    inds1=range(0, 499, 2)
+    inds2=range(1, 500, 2)
+    y11_s = ndimage.filters.gaussian_filter1d(y11[inds1], sm_w)
+    y11_cv= y11[inds2] - y11_s
+    cv_mse= np.mean(y11_cv**2.0)
+    cv_arr11[i]=cv_mse
+
+for i in range(0, 100, 1):
+    sm_w=w_arr[i]
+    inds1=range(0, 499, 2)
+    inds2=range(1, 500, 2)
+    y22_s = ndimage.filters.gaussian_filter1d(y22[inds1], sm_w)
+    y22_cv= y22[inds2] - y22_s
+    cv_mse= np.mean(y22_cv**2.0)
+    cv_arr22[i]=cv_mse
+    
 #------------------------------------------------------------
-# fit the data
-# Mesh the input space for evaluations of the real function,
-# the prediction and its MSE
-vec1=[z_sample, mu_sample]
-out1=ndimage.filters.gaussian_filter1d(vec1, 0.1)
-
-
-
-z_fit = np.linspace(0, 2, 1000)
-y_pred, MSE = gp.predict(z_fit[:, None], eval_MSE=True)
-sigma = np.sqrt(MSE)
-print gp.theta_
-
-
-
-#------------------------------------------------------------
-# Plot the gaussian process
-#  gaussian process allows computation of the error at each point
-#  so we will show this as a shaded region
+# Plot 
 fig = plt.figure(figsize=(7, 7))
 fig.subplots_adjust(left=0.1, right=0.95, bottom=0.1, top=0.95)
-ax = fig.add_subplot(111)
 
-ax.plot(z, mu_true, '--k')
-ax.errorbar(z_sample, mu_sample, dmu, fmt='.k', ecolor='gray', markersize=6)
-ax.errorbar(z_s1, mu_s1, dmu1, fmt='.r', ecolor='red', markersize=6)
+ax11 = fig.add_subplot(221)
+ax11.plot(x[inds1], y11[inds1], '.', color='#DDDDDD')
+ax11.plot(x[inds1], y11[inds2], '.', color='#0000FF')
+ax11.plot(x[inds1], y11_s, '-k')
 
-ax.plot(out1[0,:], out1[1,:], '-k')
+ax11cv = fig.add_subplot(222)
+ax11cv.plot(w_arr, cv_arr11, '-r')
+
+ax22 = fig.add_subplot(223)
+ax22.plot(x[inds1], y22[inds1], '.', color='#DDDDDD')
+ax22.plot(x[inds1], y22[inds2], '.', color='#0000FF')
+ax22.plot(x[inds1], y22_s, '-k')
+
+ax22cv = fig.add_subplot(224)
+ax22cv.plot(w_arr, cv_arr22, '-r')
+#ax22.plot(x, y22, '-r')
+#ax22.plot(x, y22, '-r')
+#ax12.plot(x, y12, '-r')
+
+#ax21 = fig.add_subplot(223)
+#ax21.plot(x, y21, '-r')
+
+#ax22 = fig.add_subplot(224)
+#ax22.plot(x, y22, '-r')
 
 #ax.plot(z_fit, y_pred, '-k')
 #ax.fill_between(z_fit, y_pred - 1.96 * sigma, y_pred + 1.96 * sigma,
 #                alpha=0.2, color='b', label='95% confidence interval')
 
-ax.set_xlabel('$z$')
-ax.set_ylabel(r'$\mu$')
-
-ax.set_xlim(0, 2)
-ax.set_ylim(36, 48)
+ax11.set_ylim(-1.5, 1.5)
+ax12.set_ylim(-1.5, 1.5)
+ax21.set_ylim(-1.5, 1.5)
+ax22.set_ylim(-1.5, 1.5)
 
 plt.show()
