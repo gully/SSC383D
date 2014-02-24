@@ -13,3 +13,7 @@
 
 # Intermediate compilation files
 *.pyc
+
+# Figures generated from code
+*.eps
+
