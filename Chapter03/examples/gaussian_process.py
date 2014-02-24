@@ -3,6 +3,8 @@ An example of Gaussian process sampling.
 
 Author: Wesley Tansey
 Date: 2/12/14
+Editted by: gully
+Date: 2/24/14  (basically learning from Wes)
 '''
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -10,6 +12,7 @@ import numpy as np
 from scipy.stats import scoreatpercentile
 from functools import partial
 import csv
+
 
 class GaussianProcess(object):
     '''
@@ -73,6 +76,7 @@ def load_utilities():
     with open('utilities.csv', 'rb') as f:
         reader = csv.reader(f)
         reader.next()
+        csv.reader()
         x = []
         y = []
         for line in reader:
