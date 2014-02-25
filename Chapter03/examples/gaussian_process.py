@@ -223,6 +223,7 @@ def utilities_heatmap():
     plt.savefig('utilities_heatmap.pdf')
     plt.clf()
 
+GaussianProcess.predict()
 
 if __name__ == '__main__':
     utilities_posterior() # regression
