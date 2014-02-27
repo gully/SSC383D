@@ -1,0 +1,8 @@
+Predictions for cheese example:
+
+1) Alpha will change store to store, beta might change, will depend on the display
+2) 88 different stores, need to handle each one
+3) We expect modest difference in the PED (beta) from regional differences.
+4) We suspect the influence of displays will not affect consumer behavior store-to-store.
+	In other words, we anticipate that display is a 'fixed effect', in the sense used by statisticians.
+5) We suspect there will be evidence for mis-fit.
