@@ -1,6 +1,7 @@
 # History files
 .Rhistory
 .DS_Store
+.gitignore
 
 # Example code in package build process
 *-Ex.R
@@ -13,6 +14,7 @@
 
 # Intermediate compilation files
 *.pyc
+*Rapp*
 
 # Figures generated from code
 *.eps

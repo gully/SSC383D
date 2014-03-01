@@ -3,7 +3,7 @@
 # Desc: Cheese example
 
 library(bayesm)
-
+library(TeachingDemos)
 #Taken from the examples in bayesm
 
 #Outline:
@@ -13,11 +13,28 @@ library(bayesm)
 #3b) Example of processing for use with rhierLinearModel
 #4) Run each individual regression and store results
 
+#Desired outputs:
+
 
 #------------------------------
 #1) Get the data
 #------------------------------
+
+#First from the package, which is nearly identical
 data(cheese)
+
+#Second from the SSC383D GitHub .csv file
+cheese_fn = '/Users/gully/astroML/SSC383D/SSC383D/Chapter05/examples/cheese.csv'
+dat1= read.csv(cheese_fn)
+str(dat1)
+
+##Find where the first cheese data has finite value for its display
+# str(cheese)
+# ids= cheese$RETAILER==dat1$store
+cheeseDispBool= cheese$DISP>0.0
+dat1DispBool= dat1$disp == 1
+#compDispBool= cheeseDispBool == dat1DispBool
+##Yes, the class data is merely a binary 'yes' or 'no' for signs
 
 #------------------------------
 #2) Inspect the dimensions, summarize
@@ -65,21 +82,42 @@ nz=ncol(Z)
 lscoef=matrix(double(nreg*nvar),ncol=nvar)
 
 #Loop over each store:
-#	Fit the problem: y
-
-reg=1
-plot(regdata[[reg]]$X[,3],regdata[[reg]]$y, xlab='ln(P)', ylab='ln(Q)', xlim=c(0.5, 1.5), ylim=c(6.0, 10.0), main='Price Elasticity of demand')
-
 for (reg in 1:nreg) {
+
+#Ignoring the displays
+lsfitList0=lsfit(regdata[[reg]]$X[,c(1,3)],regdata[[reg]]$y,intercept=FALSE)
+coef0=lsfitList0$coef
+
+#Including the displays
 lsfitList=lsfit(regdata[[reg]]$X,regdata[[reg]]$y,intercept=FALSE)
 coef=lsfitList$coef
 residuals=lsfitList$residuals
 
-points(regdata[[reg]]$X[,3],regdata[[reg]]$y, col=reg)
+old.par <- par(mfrow=c(2, 1))
 
-if (var(regdata[[reg]]$X[,2])==0) { lscoef[reg,1]=coef[1]; lscoef[reg,3]=coef[2]}
+
+#Plot ln(Q) vs. ln(P)
+plot(regdata[[reg]]$X[,3],regdata[[reg]]$y, xlab='ln(P)', ylab='ln(Q)', xlim=c(0.5, 1.5), ylim=c(6.0, 10.0), main='Price Elasticity of demand')
+abline(coef0[1], coef0[2], col="blue") # regression line (y~x)
+abline(coef[1], coef[3], col="red") # regression line (y~x)
+
+#Highlight the ones with a display:
+Dispi = regdata[[reg]]$X[,2] > 0.0
+points(regdata[[reg]]$X[Dispi,3],regdata[[reg]]$y[Dispi], col='green')
+
+plot(regdata[[reg]]$X[,3], residuals, ylim=c(-0.5, 0.5))
+abline(0,0, col='red')
+points(regdata[[reg]]$X[Dispi,3], residuals[Dispi], col='green')
+par(old.par)
+
+
+#Handle the two cases with NO displays
+noDisplays= (var(regdata[[reg]]$X[,2])==0)
+if (noDisplays) {lscoef[reg,1]=coef[1]; lscoef[reg,3]=coef[2]}
 else {lscoef[reg,]=coef }
+Sys.sleep(0.50)
 }
+
 
 R=2000
 Data=list(regdata=regdata,Z=Z)
@@ -90,8 +128,8 @@ cat("Summary of Delta Draws",fill=TRUE)
 summary(out$Deltadraw)
 cat("Summary of Vbeta Draws",fill=TRUE)
 summary(out$Vbetadraw)
-if(0){
 #
 # plot hier coefs
 plot(out$betadraw)
-}
+plot(out$Deltadraw)
+
