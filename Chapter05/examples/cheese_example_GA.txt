@@ -6,3 +6,4 @@ Predictions for cheese example:
 4) We suspect the influence of displays will not affect consumer behavior store-to-store.
 	In other words, we anticipate that display is a 'fixed effect', in the sense used by statisticians.
 5) We suspect there will be evidence for mis-fit.
+
